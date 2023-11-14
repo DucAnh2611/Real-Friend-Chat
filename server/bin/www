@@ -7,7 +7,6 @@
 var app = require('../app');
 var debug = require('debug')('server:server');
 var http = require('http');
-var client = require("../routes/_mongoDb");
 var SetupSocket = require("../socket/index");
 
 /**
