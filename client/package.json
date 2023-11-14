@@ -1,16 +1,25 @@
 {
+  "name": "client",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "next build",
     "dev": "next dev",
-    "start": "next start"
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
-    "next": "latest",
-    "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "geist": "^1.1.0",
+    "next": "14.0.2",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-query": "^3.39.3"
   },
-  "engines": {
-    "node": ">=18"
+  "devDependencies": {
+    "autoprefixer": "^10.0.1",
+    "eslint": "^8",
+    "eslint-config-next": "14.0.2",
+    "postcss": "^8",
+    "tailwindcss": "^3.3.0"
   }
 }
