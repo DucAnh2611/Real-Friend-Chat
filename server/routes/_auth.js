@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const { newToken } = require("./Model/TokenModel");
 require('dotenv').config();
 
 const config = process.env;
@@ -12,11 +13,21 @@ const verifyToken = (req, res, next) => {
   }
   try {
     const decoded = jwt.verify(token, config.TOKEN_KEY);
-    if(parseInt(new Date().getTime()/1000 - decoded.exp) > 0 ) return res.status(401).send("Token expired");
-    else {req.user = decoded}
+
+    if(parseInt(new Date().getTime()/1000 - decoded.exp) > 0 ) return res.status(401).json({status: "fail", message: "Token expired"});
+    else {
+      req.user = decoded;
+      req.token = newToken(
+        decoded,
+        process.env.TOKEN_KEY,
+        {
+          expiresIn: "72h"
+        }
+      );
+    }
 
   } catch (err) {
-    return res.status(401).send("Invalid Token");
+    return res.status(401).json({status: "fail", message: "Invalid Token"});
   }
   return next();
 };

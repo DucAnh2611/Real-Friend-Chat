@@ -9,11 +9,24 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.4.2",
+    "@fortawesome/free-brands-svg-icons": "^6.4.2",
+    "@fortawesome/free-regular-svg-icons": "^6.4.2",
+    "@fortawesome/free-solid-svg-icons": "^6.4.2",
+    "@fortawesome/react-fontawesome": "^0.2.0",
+    "@next/font": "^14.0.2",
+    "@reduxjs/toolkit": "^1.9.7",
     "geist": "^1.1.0",
     "next": "14.0.2",
+    "next-auth": "^4.24.5",
     "react": "^18",
     "react-dom": "^18",
-    "react-query": "^3.39.3"
+    "react-query": "^3.39.3",
+    "react-redux": "^7.2.0",
+    "redux": "^4.2.1",
+    "redux-devtools-extension": "^2.13.9",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.7.2"
   },
   "devDependencies": {
     "autoprefixer": "^10.0.1",

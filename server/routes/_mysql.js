@@ -6,9 +6,9 @@ const con = mysql.createConnection({
     database: "id21383452_friend_chat"
 });
 
-function execute(query) {
+function execute(query, params = []) {
     return new Promise((resolve, reject) => {
-        con.query(query, (err, res) => {
+        con.query(query, params, (err, res) => {
             if(err) {
                 reject(err);
             }
@@ -17,9 +17,9 @@ function execute(query) {
     });
 }
 
-function executeGetId(query) {
+function executeGetId(query, params = []) {
     return new Promise((resolve, reject) => {
-        con.query(query, (err, res) => {
+        con.query(query, params, (err, res) => {
             if(err) {
                 reject(err);
             }

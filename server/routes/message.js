@@ -1,19 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const { execute, executeGetId } = require("../routes/_mysql");
+const { send } = require("./Model/MessageModel");
 const auth = require("./_auth");
 
 router.post('/send', auth, async (req, res) => {
   let { user_id } = req.user;
-  let { groupid, type, content } = req.body;
 
-  let send = await executeGetId(`
-  INSERT INTO tb_message( id, group_id, content, user_id, type, deleted, pin, send)
-  VALUES (NULL, ${groupid}, '${content}', ${user_id}, ${type}, 0, NOW(), 0)
-  `);
+  send(user_id, req.body).then((data) => {
+    if(data) res.json({status: "ok", message: {id: data}});
+    else res.json({ status: 'fail' });    
+  });
 
-  if(send) res.json({status: "ok", message: {id: send}});
-  else res.json({ status: 'fail' });
 });
 
 router.put('/update', auth, async (req, res) => {
@@ -47,15 +45,19 @@ router.get('/:groupid', auth, async (req, res) => {
 
   if(checkUserGroup.length === 1) {
     let list = await execute(`
-    SELECT * 
-    FROM tb_message 
+    SELECT id, content, tu.id AS userid, tgu.nickname, tu.avatar, type, deleted, pin, send
+    FROM tb_message AS tm INNER JOIN tb_user AS tu ON tm.user_id = tu.id
+                          INNER JOIN  tb_group_user AS tgu ON tu.id = tgu.userid
     WHERE group_id = ${groupid} 
       AND content LIKE '%${key}%' 
       ${key !== "" ? `AND type = 1` :""} 
       ${checkUserGroup[0].is_leave === 0 ? `AND send <= ${checkUserGroup[0].modify} `: ""} `);
 
     list = list.map(async (e, ) => {
-      let seenPeople = await execute(`SELECT tu.*, tb_message_seen.seen_at FROM tb_message_seen AS tms INNER JOIN tb_user AS tu ON tms.user_id = tu.id WHERE message_id = ${e.id} `);
+      let seenPeople = await execute(`
+      SELECT tu.name, tu.id, tu.avatar, tb_message_seen.seen_at 
+      FROM tb_message_seen AS tms INNER JOIN tb_user AS tu ON tms.user_id = tu.id 
+      WHERE message_id = ${e.id} `);
       return e.user_id === user_id 
       ? {
         ...e,

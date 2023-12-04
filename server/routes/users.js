@@ -1,17 +1,29 @@
 var express = require('express');
 var router = express.Router();
-const jwt = require("jsonwebtoken");
+const { login, find, update } = require("./Model/UserModel");
 const { execute, executeGetId } = require("../routes/_mysql");
 const auth = require("./_auth");
+const { newToken } = require("./Model/TokenModel");
+const { resStatus } = require('./Model/resultPromise');
 require('dotenv').config();
 
 /* GET users listing. */
 router.get('/find', auth ,async (req, res) => {
   let { user_id } = req.user;
   let { key, page } = req.query;
-  let listUser = await execute(`SELECT * FROM tb_user WHERE name LIKE '%${key}%' AND id != ${user_id} LIMIT 10 OFFSET ${10*(page-1)}`);
 
-  res.json({status: "ok", data: listUser});
+  find({
+    user_id, key, page
+  }).then(data => {
+    if(data == resStatus.NOT_FOUND) {
+      res.json({status: "fail", message: "No data found"});
+    }
+    else {
+      res.json({status: "ok", data: data});      
+    }
+
+  })
+
 });
 
 router.post('/signup', async (req, res) => {
@@ -27,55 +39,42 @@ router.post('/signup', async (req, res) => {
     INSERT INTO tb_user (id, name, account, pass, email, online, show_online, last_online, modify, avatar) 
     VALUES (NULL, '${name}', '${account}','${password}', '${email}', false, true, NOW(), NOW(), '${avatar}')`);
 
-    let token = await jwt.sign(
-      {user_id: insert, email},
-      process.env.TOKEN_KEY,
-      {
-        expiresIn: "2h"
-      }
-    )
 
-    res.json({status: "ok", 
-      user : {
-        id: insert,
-        token: token
-      }
-    });
+    res.json({status: "ok", hrefCallback: "/"});
   }
 });
 
 router.post('/login', async (req, res) => {
 
-  let {account, password} = req.body;
+  login(req.body)
+    .then(data => {
+    if(data === - 1){
+      res.status(401).json({status: "fail", message: "No user"});
+    }
+    else if(data === -2) {
+      res.status(401).json({status: "fail", message: "Wrong password"});
+    }
+    else {
+      res.json({status: "ok", user : data});
+    }    
+  });
 
-  let check = await execute(`SELECT * FROM tb_user WHERE account = '${account}'`);
-  if(check.length != 0 ){
-    res.status(401).json({status: "fail", message: "No user"});
-  }
-  else if(check[0].pass !== password) {
-    res.status(401).json({status: "fail", message: "No user"});
-  }
-  else {
-    let user = check[0];
-
-    let token = jwt.sign(
-      {user_id: user.id, email},
-      process.env.TOKEN_KEY,
-      {
-        expiresIn: "2h"
-      }
-    )
-
-    res.json({status: "ok", 
-      user : {
-        id: insert,
-        name: user.name,
-        avatar: user.avatar,
-        account: account,
-        token: token
-      }
-    });
-  }
 });
+
+router.put('/update', async (req, res) => {
+  let { user_id } = req.user;
+
+  update({
+    user_id, data: req.body
+  }).then(data => {
+    if(data == resStatus.NOT_FOUND) {
+      res.json({status: "fail", message: "No data found"});
+    }
+    else {
+      res.json({status: "ok", data: data});      
+    }
+
+  })
+})
 
 module.exports = router;
