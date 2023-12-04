@@ -1,6 +1,5 @@
 const { execute, executeGetId } = require("../_mysql");
 const { resStatus } = require("./resultPromise");
-const { newToken } = require("./TokenModel");
 
 const defaultAvatar = 'https://static.thenounproject.com/png/5034901-200.png';
 const defaultLimit = 15;
@@ -17,15 +16,9 @@ const find = ({userid, key, page, limit = defaultLimit}) => {
           WHERE name LIKE ? AND id = ?
           LIMIT ?
           OFFSET ?
-        `, [`%${key}%`, userid, limit, (page-1)*limit]);
+        `, [`'%${key}%'`, userid, limit, (page-1)*limit]);
 
-        let token = await newToken(
-          {user_id: user.id, email},
-          process.env.TOKEN_KEY,
-          "72h"
-        );
-
-        resolve({list,token});
+        resolve(list);
     }
   })
 }
@@ -39,17 +32,10 @@ const login = ({email = '', password = ''}) => {
     else {
         let user = check[0];
 
-        let token = await newToken(
-            {user_id: user.id, email},
-            process.env.TOKEN_KEY,
-            "72h"
-        );
-
         resolve({
             id: user.id,
             name: user.name,
-            avatar: user.avatar,
-            token: token
+            avatar: user.avatar
         });
     }
   })
@@ -69,16 +55,7 @@ const signup = ({
         let userid = await executeGetId(`INSERT INTO tb_user (id, name, pass, email, online, show_online, last_online, modify, avatar) 
         VALUES (NULL, ?, ?, ?, 0, 1, NOW(), NOW(), ?)`, [username, password, email, avatar]);
 
-        let token = await newToken(
-            {user_id: userid, email},
-            process.env.TOKEN_KEY,
-            "72h"
-        )
-
-        resolve({
-            id: userid,
-            token: token
-        });
+        resolve(resStatus.OK);
     }
   })
 }
@@ -99,15 +76,7 @@ const update = ({userid, data}) => {
       WHERE id = ?
       `, Object.values(data).push(userid));
 
-      let token = await newToken(
-          {user_id: userid, email: user.email},
-          process.env.TOKEN_KEY,
-          "72h"
-      );
-
-      resolve({
-          token: token
-      });
+      resolve(resStatus.OK);
     }
   })
 }

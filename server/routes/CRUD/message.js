@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { execute, executeGetId } = require("../routes/_mysql");
-const { send } = require("./Model/MessageModel");
-const auth = require("./_auth");
+const { execute, executeGetId } = require("../_mysql");
+const { send } = require("../Model/MessageModel");
+const auth = require("../_auth");
 
 router.post('/send', auth, async (req, res) => {
   let { user_id } = req.user;

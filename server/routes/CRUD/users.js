@@ -1,10 +1,9 @@
 var express = require('express');
 var router = express.Router();
-const { login, find, update } = require("./Model/UserModel");
-const { execute, executeGetId } = require("../routes/_mysql");
-const auth = require("./_auth");
-const { newToken } = require("./Model/TokenModel");
-const { resStatus } = require('./Model/resultPromise');
+const { login, find, update } = require("../Model/UserModel");
+const { execute, executeGetId } = require("../_mysql");
+const auth = require("../_auth");
+const { resStatus } = require('../Model/resultPromise');
 require('dotenv').config();
 
 /* GET users listing. */

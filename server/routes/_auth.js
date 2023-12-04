@@ -16,14 +16,16 @@ const verifyToken = (req, res, next) => {
 
     if(parseInt(new Date().getTime()/1000 - decoded.exp) > 0 ) return res.status(401).json({status: "fail", message: "Token expired"});
     else {
-      req.user = decoded;
-      req.token = newToken(
+      req.user = {
         decoded,
-        process.env.TOKEN_KEY,
-        {
-          expiresIn: "72h"
-        }
-      );
+        token: newToken(
+          decoded,
+          process.env.TOKEN_KEY,
+          {
+            expiresIn: "72h"
+          }
+        )
+      };
     }
 
   } catch (err) {

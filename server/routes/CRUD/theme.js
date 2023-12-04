@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { execute, executeGetId } = require("../routes/_mysql");
-const { createTheme, updateTheme, getTheme } = require("./Model/ThemeModel");
-const auth = require("./_auth");
+const { execute, executeGetId } = require("../_mysql");
+const { createTheme, updateTheme, getTheme } = require("../Model/ThemeModel");
+const auth = require("../_auth");
 
 router.get('/all', async (req, res) => {
 	let { page } = req.query;

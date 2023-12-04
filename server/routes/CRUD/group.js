@@ -1,22 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const { execute, executeGetId } = require("../routes/_mysql");
-const auth = require("./_auth");
+const { execute, executeGetId } = require("../_mysql");
+const auth = require("../_auth");
 const { 
   createGroup, 
   updateGroup, 
   getGroup, 
   getGroupUnread, 
-  getLastSeenGroup } = require("./Model/GroupModel");
+  getLastSeenGroup } = require("../Model/GroupModel");
+const { resStatus } = require('../Model/resultPromise');
 
 router.get('/all', auth, async (req, res) => {
   let { user_id } = req.user;
   let { page } = req.query;
 
   getGroupUnread(user_id, page, 0).then(data => {
-    let list = data; 
-
-    if(list.length !== 0) {
+    if(data === resStatus.NOT_FOUND) res.status(403).json({status: "fail"})
+    else if(list.length !== 0) {
+      let list = data; 
 
       list = list.map(async e => {
         let seen = await getLastSeenGroup(e.id);
@@ -24,9 +25,10 @@ router.get('/all', auth, async (req, res) => {
           ...e,
           seen : seen
         }
-      });    
+      });   
+      
+      res.json({ status: "ok", list: list}); 
     }
-    res.json({ status: "ok", list: list});
   });
 
 });

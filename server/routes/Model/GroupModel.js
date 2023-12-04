@@ -1,4 +1,5 @@
 const { execute, executeGetId } = require("../_mysql");
+const { resStatus } = require("./resultPromise");
 const DEFAULT_ITEM_PAGE = 15;
 
 const createGroup = (user_id, body) => {
@@ -13,19 +14,21 @@ const createGroup = (user_id, body) => {
         if(newGroupId) {
             await execute(`
             INSERT INTO tb_group_user( user_id, group_id, role, nickname, notify, is_leave, modify) 
-            VALUES(?, ?, 1, (SELECT name FROM tb_user WHERE id = ?), 1, 0, NOW())`,
-            [user_id, newGroupId, user_id]);
+            VALUES
+                (?, ?, 1, (SELECT name FROM tb_user WHERE id = ?), 1, 0, NOW())
+                ${userids.reduce((acc, curr, index) => {
+                    return acc += `(?, ?, 0, (SELECT name FROM tb_user WHERE id = ?), 1, 0, NOW())${index === userids.length-1 ? "" : ",\n"}`
+                }, "")}`,
+            [user_id, newGroupId, user_id, 
+                [...(userids.map(e => {
+                    return Array(e.id, newGroupId).flat(2);
+                }))]
+            ]);
         
-            userids.forEach(async e => {
-                await execute(`
-                INSERT INTO tb_group_user( user_id, group_id, role, nickname, notify, is_leave, modify) 
-                VALUES(?, ?, 0, (SELECT name FROM tb_user WHERE id = ?), 1, 0, NOW())`,
-                [e.id, newGroupId, e.id]);
-            });
             resolve(newGroupId);
         }        
         else {
-            reject(-1);
+            reject(resStatus.NOT_VALID);
         }
     })
 
@@ -33,36 +36,35 @@ const createGroup = (user_id, body) => {
 
 const updateGroup = (conditions, arrData, value) => {
     return new Promise(async (resolve, reject) => {
-        let query = `UPDATE tb_group SET `;
-        let condition = `WHERE true && ${conditions.reduce((acc, curr) => {
-            return acc  += `${curr} = ?`
-        }, "")}`;
+        let condition = conditions.reduce((acc, curr) => {
+            return acc  += `AND ${curr} = ?`
+        }, "WHERE true ");
 
-        query += arrData.reduce((acc, field, index) => {
+        let query = arrData.reduce((acc, field, index) => {
             
             return acc += `${field} = ? ${index === arrData.length-1 ?"" : ", "}`;
-        }, "");
+        }, "UPDATE tb_group SET ");
 
         let update = await execute(`${query} ${condition}`, [arrData, value]);      
 
         if(update) {
-            resolve(1);
+            resolve(resStatus.OK);
         }  
-        else {reject(-1);}
+        else reject(resStatus.NOT_FOUND);
     });
 }
 
 const getGroup = (conditions, currentPage = 1, item = DEFAULT_ITEM_PAGE) => {
     return new Promise(async (resolve, reject) => {
         let query = `SELECT * FROM tb_group`;
-        let condition = `WHERE true && ${Object.keys(conditions).reduce((acc, curr) => {
-            return acc += `${curr} = ?`
-        }, "")}`;
+        let condition = Object.keys(conditions).reduce((acc, curr) => {
+            return acc += `AND ${curr} = ?`
+        }, "WHERE true ")
 
         let select = await execute(`${query} ${conditions.length !== 0 ? condition : ""} LIMIT ${item} OFFSET ${item*(currentPage-1)}`, Object.values(conditions)); 
 
-        if(select) resolve(select);
-        else reject(-1);
+        if(select.length!== 0) resolve(select);
+        else reject(resStatus.NOT_FOUND);
     });
 }
 
@@ -75,7 +77,7 @@ const getGroupUnread = (user_id, currentPage = 1, item = DEFAULT_ITEM_PAGE) => {
             WHERE tgu.user_id = ${user_id}
             ORDER BY send DESC
             LIMIT ${item}
-            OFFSET ${15*(currentPage-1)}
+            OFFSET ${item*(currentPage-1)}
         `);
 
         if(list) resolve(list);
